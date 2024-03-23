@@ -2,52 +2,58 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kanban App</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body>
-  <div class="container">
-    <div class="columns-3 h-screen p-2">
-      <!-- ... -->
-      <div class="columns-1 h-full rounded border-2 border-teal-500 p-2">
-        <h1 class="my-2 text-xl">To do</h1>
-        <!-- Formulario de ingreso de nueva tarea -->
-        <div class="columns-1 p-1 h-fit rounded border-2 border-teal-500 mb-3 p-3">
-          <form id="nuevaTareaFormulario" onsubmit="agregarNuevaTarea(event)">
-            <input type="text" id="descripcionNuevaTarea" class="rounded w-full border-2 border-b-gray-500 p-1.5"
-              placeholder="Descripcion de la tarea" required />
-            <button type="submit" class="bg-teal-600 rounded border-3 border-gray-500 text-white text-center w-full my-1 p-1">
-              Guardar nueva tarea
-            </button>
-          </form>
+    <div class="container">
+        <div class="columns-3 h-screen p-2">
+            <!-- ... -->
+            <div class="columns-1 h-full rounded border-2 border-teal-500 p-2">
+                <h1 class="my-2 text-xl">To do</h1>
+                <!-- Formulario de ingreso de nueva tarea -->
+                <div class="columns-1 p-1 h-fit rounded border-2 border-teal-500 mb-3 p-3">
+                    <form id="nuevaTareaFormulario" onsubmit="agregarNuevaTarea(event)">
+                        <input type="text" id="descripcionNuevaTarea"
+                            class="rounded w-full border-2 border-b-gray-500 p-1.5"
+                            placeholder="Descripcion de la tarea" required />
+                        <button type="submit"
+                            class="bg-teal-600 rounded border-3 border-gray-500 text-white text-center w-full my-1 p-1">
+                            Guardar nueva tarea
+                        </button>
+                    </form>
+                </div>
+                <div id="todoContainer">
+                    <!-- Aqui vamos a agregar de manera dinamica el codigo HTML de nuestras tareas -->
+                </div>
+            </div>
+            <!-- ... -->
+            <div class="columns-1 h-full rounded border-2 border-yellow-500 p-2">
+                <h1 class="my-2 text-xl">Doing</h1>
+                <div id="doingContainer">
+                    <!-- Aqui vamos a agregar de manera dinamica el codigo HTML de nuestras tareas -->
+                </div>
+            </div>
+            <div class="columns-1 h-full rounded border-2 border-rose-500 p-2">
+                <h1 class="my-2 text-xl">Done</h1>
+                <div id="doneContainer">
+                    <!-- Aqui vamos a agregar de manera dinamica el codigo HTML de nuestras tareas -->
+                </div>
+            </div>
         </div>
-        <div id="todoContainer">
-          <!-- Aqui vamos a agregar de manera dinamica el codigo HTML de nuestras tareas -->
-        </div>
-      </div>
-        <!-- ... -->
-      <div class="columns-1 h-full rounded border-2 border-yellow-500 p-2">
-        <h1 class="my-2 text-xl">Doing</h1>
-        <div id="doingContainer">
-          <!-- Aqui vamos a agregar de manera dinamica el codigo HTML de nuestras tareas -->
-        </div>
-      </div>
-      <div class="columns-1 h-full rounded border-2 border-rose-500 p-2">
-        <h1 class="my-2 text-xl">Done</h1>
-        <div id="doneContainer">
-          <!-- Aqui vamos a agregar de manera dinamica el codigo HTML de nuestras tareas -->
-        </div>
-      </div>
     </div>
-  </div>
     <script>
         let tareas = [];
 
-      //  renderizarTareas('todo');
+        tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+
+        renderizarTareas('todo');
+        renderizarTareas('doing');
+        renderizarTareas('done');
 
         function renderizarTareas(estado) {
             let tareasHTML = "";
@@ -64,11 +70,57 @@
                             ${tarea.descripcion}
                           </h1>
                           ${estado == "todo" || estado == "doing" ? botonHTML : ''}
+                          <button type="button" class="bg-red-600 rounded border-3 border-gray-500 text-white text-center w-full my-1 p-1" onclick="borrarTarea(event, ${tarea.id})">
+                            Borrar
+                          </button>
                         </div>`;
                 });
             let containerElement = document.getElementById(estado + "Container");
             containerElement.innerHTML = tareasHTML;
         }
+
+        function agregarNuevaTarea(e) {
+            e.preventDefault();
+            let descripcion = document.getElementById("descripcionNuevaTarea").value;
+            const nuevaTarea = {
+                id: tareas.length + 1,
+                descripcion,
+                estado: "todo",
+            };
+            tareas.push(nuevaTarea);
+            localStorage.setItem('tareas', JSON.stringify(tareas));
+            renderizarTareas("todo");
+            document.getElementById("nuevaTareaFormulario").reset();
+        }
+
+        function cambiarEstadoTarea(e, id, estadoAnterior) {
+            e.preventDefault();
+            let indiceTarea = tareas.findIndex((tarea) => tarea.id == id);
+            let nuevoEstado;
+            if (estadoAnterior == "todo") {
+                nuevoEstado = "doing";
+            } else if (estadoAnterior == "doing") {
+                nuevoEstado = "done";
+            }
+
+            tareas[indiceTarea].estado = nuevoEstado;
+            localStorage.setItem('tareas', JSON.stringify(tareas));
+            renderizarTareas(estadoAnterior);
+            renderizarTareas(nuevoEstado);
+        }
+
+        function borrarTarea(e, id) {
+    e.preventDefault();
+    let indiceTarea = tareas.findIndex((tarea) => tarea.id == id);
+    if (indiceTarea !== -1) {
+        tareas.splice(indiceTarea, 1); // Elimina la tarea del arreglo
+        localStorage.setItem('tareas', JSON.stringify(tareas)); // Actualiza el almacenamiento local
+        // Vuelve a renderizar las tareas en sus respectivos contenedores
+        renderizarTareas('todo');
+        renderizarTareas('doing');
+        renderizarTareas('done');
+    }
+}
     </script>
 </body>
 
